@@ -36,10 +36,11 @@ class Drone:
         self.last_updated = datetime.now()
         logging.info(f"Drone {self.drone_id} took off from dock {self.dock_id}")
         
-    def land(self, dock_id: str):
+    def land(self, dock_id=None):
         """
         Set the drone status to docked.
         """
+        # TODO: dock_id should be given
         self.status = DroneStatus.DOCKED
         self.last_updated = datetime.now()
         self.dock_id = dock_id
