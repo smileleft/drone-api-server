@@ -1,3 +1,4 @@
 pydantic
 uvicorn[standard]
 fastapi
+motor

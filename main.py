@@ -31,6 +31,10 @@ async def get_drone_status(drone_id: str):
     try:
         result = await drone_service.get_status(drone_id)
         return DroneStatusResponse(drone_id=drone_id, drone_status=result)
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail="Request timed out")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -42,6 +46,10 @@ async def takeoff_drone(drone_id: str):
         logging.info("takeoff start.")
         result = await drone_service.execute_takeoff(drone_id=drone_id)
         return DroneCommandResponse(message=result)
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail="Request timed out")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -52,6 +60,10 @@ async def land_drone(drone_id: str):
     try:
         result = await drone_service.execute_land(drone_id=drone_id)
         return DroneCommandResponse(message=result)
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail="Request timed out")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -62,6 +74,10 @@ async def return_home(drone_id: str):
     try:
         result = await drone_service.execute_return_home(drone_id=drone_id)
         return DroneCommandResponse(message=result)
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail="Request timed out")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

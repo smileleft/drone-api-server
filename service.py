@@ -1,17 +1,6 @@
 from drone import Drone, DroneStatus
+from repository import DroneRepository
 from typing import Dict
-import asyncio
-import logging
-
-class DroneRepository:
-    def __init__(self):
-        # TODO: Get Drone Info from DB
-        self._drones: Dict[str, Drone] = {}
-
-    async def get(self, drone_id: str) -> Drone:
-        if drone_id not in self._drones:
-            self._drones[drone_id] = Drone(drone_id)
-        return self._drones[drone_id]
 
 
 class DroneCommandService:
@@ -23,22 +12,34 @@ class DroneCommandService:
         return drone.status
 
     async def execute_takeoff(self, drone_id: str):
-        # TODO: Make Command and Publish MQTT
-        #logging.info('execute_takeoff start.')
+        # TODO: Make Command and Publish MQTT 
         drone = await self.drone_repository.get(drone_id)
-        #logging.info('execute_takeoff completed.')
         drone.takeoff()
-        #logging.info('ready to send result')
-        return "takeoff command sent"
+        await self.drone_repository.save(drone)
+        return f"takeoff command sent to Drone {drone_id}"
 
     async def execute_land(self, drone_id: str):
         # TODO: Make Command and Publish MQTT
         drone = await self.drone_repository.get(drone_id)
         drone.land()
-        return "land command sent"
+        await self.drone_repository.save(drone)
+        return f"land command sent to Drone {drone_id}"
 
     async def execute_return_home(self, drone_id: str):
         drone = await self.drone_repository.get(drone_id)
         drone.return_home()
-        return "return_home command sent"
+        await self.drone_repository.save(drone)
+        return f"return_home command sent to Drone {drone_id}"
+    
+    async def execute_update_status(self, drone_id: str, status: DroneStatus):
+        drone = await self.drone_repository.get(drone_id)
+        drone.update_status(status)
+        await self.drone_repository.save(drone)
+        return f"update_status command sent to Drone {drone_id}"
+    
+    async def execute_update_dock(self, drone_id: str, dock_id: str):
+        drone = await self.drone_repository.get(drone_id)
+        drone.dock_id = dock_id
+        await self.drone_repository.save(drone)
+        return f"update_dock command sent to Drone {drone_id}"
 

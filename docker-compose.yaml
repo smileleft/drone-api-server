@@ -1,0 +1,21 @@
+# This is a Docker Compose file for setting up a MongoDB and Mosquitto broker environment.
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongo_data:/data/db
+      - ./mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: perigee
+      MONGO_INITDB_ROOT_PASSWORD: perigee1234
+      MONGO_INITDB_USERNAME: hkcho
+      MONGO_INITDB_PASSWORD: hkcho1234
+      MONGO_INITDB_DATABASE: drone_db
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    ports:
+      - 1883:1883
