@@ -25,6 +25,22 @@ class DroneCommandResponse(BaseModel):
     message: str
 # endregion
 
+@app.on_event("startup")
+async def start_mqtt_client():
+    """
+    Start the MQTT client.
+    """
+    try:
+        await drone_service.publisher.connect()
+        logging.info("MQTT client connected.")
+        await drone_service.subscriber.connect()
+        logging.info("MQTT subscriber connected.")
+    except Exception as e:
+        logging.error(f"Failed to connect to MQTT broker: {e}")
+    finally:
+        await drone_service.publisher.client.disconnect()
+        logging.info("MQTT client disconnected.")
+
 @router.get("/drones/{drone_id}/status")
 async def get_drone_status(drone_id: str):
     
