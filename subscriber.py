@@ -27,7 +27,7 @@ class DroneStatusSubscriber:
         self.client = MQTTClient(client_id=self.client_id)
         self.client.on_message = self.on_message
         self.client.on_connect = self.on_connect
-        self._is_connected = False
+        #self._is_connected = False
 
     async def connect(self):
         """
@@ -35,14 +35,14 @@ class DroneStatusSubscriber:
         """
         await self.client.connect(self.broker, self.broker_port)
         logging.info(f"Connected to MQTT broker at {self.broker}:{self.broker_port}")
-        await self._is_connected.wait()
-        logging.info("Waiting for connection to complete...")
-        while not self._is_connected.is_set():
-            await asyncio.sleep(0.1)
+        #await self._is_connected.wait()
+        #logging.info("Waiting for connection to complete...")
+        #while not self._is_connected.is_set():
+        #    await asyncio.sleep(0.1)
 
     def on_connect(self, client, flags, rc, properties):
         logging.info("Connected to MQTT broker")
-        self._is_connected = True
+        #self._is_connected = True
         client.subscribe(self.topic, qos=1)
         logging.info(f"Subscribed to topic {self.topic}")
 

@@ -19,7 +19,7 @@ class DroneCommandService:
     def __init__(self, drone_repository: DroneRepository):
         self.drone_repository = drone_repository
         self.publisher = Publisher()
-        self.subsciber = DroneStatusSubscriber()
+        self.subscriber = DroneStatusSubscriber()
 
     async def get_status(self, drone_id: str) -> DroneStatus:
         drone = await self.drone_repository.get(drone_id)

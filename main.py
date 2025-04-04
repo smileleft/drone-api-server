@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException , APIRouter, status
 from fastapi.responses import JSONResponse
+from contextlib import asynccontextmanager
 from pydantic import BaseModel
 import asyncio
 import uvicorn
@@ -7,8 +8,6 @@ from drone import DroneStatus
 from service import DroneRepository, DroneCommandService
 import logging
 
-app = FastAPI()
-router = APIRouter()
 
 # repository init
 drone_repository = DroneRepository()
@@ -25,21 +24,23 @@ class DroneCommandResponse(BaseModel):
     message: str
 # endregion
 
-@app.on_event("startup")
-async def start_mqtt_client():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     """
     Start the MQTT client.
     """
-    try:
-        await drone_service.publisher.connect()
-        logging.info("MQTT client connected.")
-        await drone_service.subscriber.connect()
-        logging.info("MQTT subscriber connected.")
-    except Exception as e:
-        logging.error(f"Failed to connect to MQTT broker: {e}")
-    finally:
-        await drone_service.publisher.client.disconnect()
-        logging.info("MQTT client disconnected.")
+    await drone_service.publisher.connect()
+    await drone_service.subscriber.connect()
+    yield
+    await drone_service.publisher.client.disconnect()
+    await drone_service.subscriber.client.disconnect()
+    logging.info("MQTT client disconnected")
+
+app = FastAPI(lifespan=lifespan)
+app.title = "Drone Command API"
+app.description = "API for controlling drones and retrieving their status."
+app.version = "1.0.0"
+router = APIRouter()
 
 @router.get("/drones/{drone_id}/status")
 async def get_drone_status(drone_id: str):
