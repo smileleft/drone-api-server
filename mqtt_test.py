@@ -1,8 +1,6 @@
 import asyncio
 from gmqtt import Client as MQTTClient
 
-# 이벤트 루프 (윈도우에서는 ProactorEventLoop 써야 할 수도 있음)
-loop = asyncio.get_event_loop()
 
 # 콜백 함수 정의
 def on_connect(client, flags, rc, properties):
@@ -12,20 +10,26 @@ def on_connect(client, flags, rc, properties):
 def on_message(client, topic, payload, qos, properties):
     print(f"Received message on {topic}: {payload.decode()}")
 
+def on_disconnect(client, packet, exc=None):
+    print("Disconnected from MQTT broker")
+
+
 # MQTT 연결 함수
 async def connect_and_publish():
-    client = MQTTClient("python-client")
+    client = MQTTClient(client_id="python-client-123")
 
     client.on_connect = on_connect
     client.on_message = on_message
+    client.on_disconnect = on_disconnect
 
-    await client.connect('localhost', 1883)
+    await client.connect(host='localhost', port=1883)
 
-    await client.publish('test/topic', 'Hello from gmqtt!', qos=1)
-
+    
     # 계속 실행 (subscribe 유지)
     while True:
+        print("Waiting for messages...")
         await asyncio.sleep(1)
+        client.publish('test/topic', 'Hello from gmqtt!', qos=1)
 
 # 실행
 if __name__ == "__main__":

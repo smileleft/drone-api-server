@@ -19,3 +19,6 @@ services:
     container_name: mosquitto
     ports:
       - 1883:1883
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data

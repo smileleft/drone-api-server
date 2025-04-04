@@ -25,4 +25,4 @@ class Publisher:
             "drone_id": drone_id,
             "command": command
         })
-        await self.client.publish(self.topic, payload, qos=1)
+        self.client.publish(self.topic, payload, qos=1)
