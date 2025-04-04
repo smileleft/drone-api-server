@@ -61,8 +61,8 @@ class DroneCommandListener:
                 }
             }
 
-            await self.client.publish(MQTT_PUB_TOPIC, json.dumps(status_msg), qos=1)
-            logging.ino(f"Published new status: {status_msg}")
+            self.client.publish(MQTT_PUB_TOPIC, json.dumps(status_msg), qos=1)
+            logging.info(f"Published new status: {status_msg}")
 
         except Exception as e:
             logging.error(f"Error processing message: {e}")

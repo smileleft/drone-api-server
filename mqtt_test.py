@@ -1,20 +1,22 @@
 import asyncio
 from gmqtt import Client as MQTTClient
+import logging
 
 # region callback functions
 def on_connect(client, flags, rc, properties):
-    print("Connected to MQTT broker")
+    logging.info("Connected to MQTT broker")
     client.subscribe('test/topic', qos=1)
 
 def on_mission_connect(client, flags, rc, properties):
-    print("Connected to MQTT broker")
+    logging.info("Connected to MQTT broker")
     client.subscribe('drone/commands', qos=1)
 
 def on_message(client, topic, payload, qos, properties):
-    print(f"Received message on {topic}: {payload.decode()}")
+    logging.info(f"Received message on {topic}: {payload.decode()}")
+
 
 def on_disconnect(client, packet, exc=None):
-    print("Disconnected from MQTT broker")
+    logging.info("Disconnected from MQTT broker")
 # endregion
 
 
@@ -28,13 +30,13 @@ async def connect_and_publish():
 
     await client.connect(host='localhost', port=1883)
 
-    
     # keep on (subscribe)
     while True:
-        print("Waiting for messages...")
+        logging.info("Waiting for messages...")
         await asyncio.sleep(1)
         client.publish('test/topic', 'Hello from gmqtt!', qos=1)
 
+# Drone mission test
 async def do_mission_test():
     client = MQTTClient(client_id="drone-001")
 
@@ -44,7 +46,7 @@ async def do_mission_test():
     await client.connect(host='localhost', port=1883)
 
     while True:
-        print("Waiting for commands...")
+        logging.info("Waiting for commands...")
         await asyncio.sleep(1)
 
 

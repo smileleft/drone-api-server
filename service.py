@@ -58,7 +58,7 @@ class DroneCommandService:
         #drone.return_home()
         #await self.drone_repository.save(drone)
 
-        await self.publisher.publish_command(drone_id, "return_home")
+        await self.publisher.publish_command(drone_id, "return-home")
 
         return f"return_home command sent to Drone {drone_id}"
     

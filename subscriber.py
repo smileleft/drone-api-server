@@ -14,7 +14,8 @@ class DroneTopic(BaseModel):
     timestamp: datetime
     data: Dict
 
-mongo_client = AsyncIOMotorClient(os.getenv("DRONE_DB_URL", "mongodb://localhost:27017"))
+
+mongo_client = AsyncIOMotorClient(os.getenv("DRONE_DB_URL", "mongodb://hkcho:hkcho1234@localhost:27017/?authSource=drone_db"))
 drone_db = mongo_client["drone_db"]
 collection = drone_db["drones"]
 
