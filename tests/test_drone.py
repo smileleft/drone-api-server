@@ -1,81 +1,82 @@
-import os
-import asyncio
-import uuid
+import unittest
 from datetime import datetime
-import json
-from gmqtt import Client as MQTTClient
-import logging
+from domain.drone import Drone, DroneStatus
 
-# MAP: command → status
-COMMAND_STATUS_MAP = {
-    "takeoff": "flying",
-    "return-home": "returning",
-    "land": "docked"
-}
+class TestDrone(unittest.TestCase):
+    def setUp(self):
+        """
+        Set up a test drone object before each test.
+        """
+        self.drone = Drone(drone_id="drone-123", dock_id="dock-1", status=DroneStatus.IDLE)
 
-# environment variables
-MQTT_HOST = os.getenv("MQTT_HOST", "localhost")
-MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))
-MQTT_SUB_TOPIC = os.getenv("MQTT_TOPIC", "drone/commands")
-MQTT_PUB_TOPIC = os.getenv("MQTT_TOPIC", "drone/status")
+    def test_initialization(self):
+        """
+        Test the initialization of a Drone object.
+        """
+        self.assertEqual(self.drone.drone_id, "drone-123")
+        self.assertEqual(self.drone.dock_id, "dock-1")
+        self.assertEqual(self.drone.status, DroneStatus.IDLE)
+        self.assertIsInstance(self.drone.last_updated, datetime)
 
-# MQTT client Init
-class DroneCommandListener:
-    def __init__(self, client_id="drone-command-handler"):
-        self.client = MQTTClient(client_id)
-        self.client.on_connect = self.on_connect
-        self.client.on_message = self.on_message
+    def test_takeoff(self):
+        """
+        Test the takeoff method.
+        """
+        self.drone.takeoff()
+        self.assertEqual(self.drone.status, DroneStatus.FLYING)
+        self.assertIsInstance(self.drone.last_updated, datetime)
 
-    async def connect(self):
-        await self.client.connect(MQTT_HOST, MQTT_PORT)
+    def test_land(self):
+        """
+        Test the land method.
+        """
+        self.drone.land(dock_id="dock-2")
+        self.assertEqual(self.drone.status, DroneStatus.DOCKED)
+        self.assertEqual(self.drone.dock_id, "dock-2")
+        self.assertIsInstance(self.drone.last_updated, datetime)
 
-    def on_connect(self, client, flags, rc, properties):
-        logging.info(f"Connected to MQTT broker at {MQTT_HOST}:{MQTT_PORT}")
-        client.subscribe(MQTT_SUB_TOPIC)
+    def test_return_home(self):
+        """
+        Test the return_home method.
+        """
+        self.drone.return_home()
+        self.assertEqual(self.drone.status, DroneStatus.RETURNING)
+        self.assertIsInstance(self.drone.last_updated, datetime)
 
-    async def on_message(self, client, topic, payload, qos, properties):
-        try:
-            message = json.loads(payload)
-            logging.info(f"Received message on {topic}: {message}")
+    def test_update_status(self):
+        """
+        Test the update_status method.
+        """
+        self.drone.update_status(DroneStatus.FLYING)
+        self.assertEqual(self.drone.status, DroneStatus.FLYING)
+        self.assertIsInstance(self.drone.last_updated, datetime)
 
-            drone_id = message.get("drone_id")
-            command = message.get("command")
+    def test_to_dict(self):
+        """
+        Test the to_dict method.
+        """
+        drone_dict = self.drone.to_dict()
+        self.assertEqual(drone_dict["drone_id"], "drone-123")
+        self.assertEqual(drone_dict["dock_id"], "dock-1")
+        self.assertEqual(drone_dict["status"], "idle")
+        self.assertIsInstance(drone_dict["last_updated"], datetime)
 
-            if not drone_id or not command:
-                logging.error("Invalid payload: missing 'drone_id' or 'command'")
-                return
-
-            new_status = COMMAND_STATUS_MAP.get(command)
-            if not new_status:
-                logging.error(f"Unknown command: {command}")
-                return
-
-            status_msg = {
-                "tid": str(uuid.uuid4()),
-                "timestamp": datetime.strftime(datetime.now(), "%Y-%m-%dT%H:%M:%S"),
-                "data": {
-                    "drone_id": drone_id,
-                    "dock_id": None,  # Assuming dock_id is not provided in the command
-                    "status": new_status,
-                    "last_updated": datetime.strftime(datetime.now(), "%Y-%m-%dT%H:%M:%S")
-                }
-            }
-
-            self.client.publish(MQTT_PUB_TOPIC, json.dumps(status_msg), qos=1)
-            logging.info(f"Published new status: {status_msg}")
-
-        except Exception as e:
-            logging.error(f"Error processing message: {e}")
-
-
-async def main():
-    handler = DroneCommandListener()
-    await handler.connect()
-
-    # Keep the event loop running
-    while True:
-        await asyncio.sleep(1)
+    def test_from_dict(self):
+        """
+        Test the from_dict class method.
+        """
+        drone_data = {
+            "drone_id": "drone-456",
+            "dock_id": "dock-3",
+            "status": "flying",
+            "last_updated": datetime.now().isoformat()
+        }
+        drone = Drone.from_dict(drone_data)
+        self.assertEqual(drone.drone_id, "drone-456")
+        self.assertEqual(drone.dock_id, "dock-3")
+        self.assertEqual(drone.status, DroneStatus.FLYING)
+        self.assertIsInstance(drone.last_updated, datetime)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    unittest.main()

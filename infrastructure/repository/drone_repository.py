@@ -1,6 +1,6 @@
 import os
 from typing import Dict
-from drone import Drone
+from domain.drone import Drone
 from motor.motor_asyncio import AsyncIOMotorClient
 
 class DroneRepository:
@@ -17,7 +17,7 @@ class DroneRepository:
         self.client = AsyncIOMotorClient(db_url)
         self.collection = self.client[db_name]["drones"]
 
-    async def get(self, drone_id: str) -> Drone:
+    async def find_by_id(self, drone_id: str) -> Drone:
         doc = await self.collection.find_one({"drone_id": drone_id})
         if not doc:
             raise ValueError(f"Drone with ID {drone_id} not found")
@@ -30,4 +30,10 @@ class DroneRepository:
             upsert=True
         )
 
+    async def delete_drone_by_id(self, drone_id: str) -> str:
+        result = await self.collection.delete_one({"drone_id": drone_id})
+        if result.deleted_count:
+            return f"Deleted drone with ID: {drone_id}"
+        else:
+            return f"No drone found with ID: {drone_id}"
     

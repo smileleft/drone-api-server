@@ -4,16 +4,32 @@ from contextlib import asynccontextmanager
 from pydantic import BaseModel
 import asyncio
 import uvicorn
-from drone import DroneStatus
-from service import DroneRepository, DroneCommandService
+from domain.drone import DroneStatus, Drone
 import logging
 
+import os
+from gmqtt import Client as MQTTClient
+from infrastructure.mqtt_handler import MQTTHandler
+from infrastructure.repository.drone_repository import DroneRepository
+import application.drone_command_service as drone_command_service
 
-# repository init
-drone_repository = DroneRepository()
+# MQTT configuration
+MQTT_HOST = "localhost"
+MQTT_PORT = 1883
+COMMAND_TOPIC = "drone/command"
+STATUS_TOPIC = "drone/status"
 
-# service init
-drone_service = DroneCommandService(drone_repository)
+# MongoDB configuration
+MONGO_URI = "mongodb://localhost:27017"
+
+
+# Initialize MQTT client and repository
+mqtt_client = MQTTClient("drone-api-server")
+repository = DroneRepository(mongo_uri=MONGO_URI)
+
+# Initialize MQTT handler
+mqtt_handler = MQTTHandler(mqtt_client, COMMAND_TOPIC, STATUS_TOPIC, repository)
+
 
 # region Response definition
 class DroneStatusResponse(BaseModel):
@@ -29,12 +45,18 @@ async def lifespan(app: FastAPI):
     """
     Start the MQTT client.
     """
-    await drone_service.publisher.connect()
-    await drone_service.subscriber.connect()
+    await mqtt_client.connect(MQTT_HOST, MQTT_PORT)
+    logging.info(f"Connected to MQTT broker at {MQTT_HOST}:{MQTT_PORT}")
+    await mqtt_client.subscribe(COMMAND_TOPIC)
+    logging.info(f"Subscribed to topic {COMMAND_TOPIC}")
+    
+
     yield
-    await drone_service.publisher.client.disconnect()
-    await drone_service.subscriber.client.disconnect()
-    logging.info("MQTT client disconnected")
+    await mqtt_client.unsubscribe(COMMAND_TOPIC)
+    logging.info(f"Unsubscribed from topic {COMMAND_TOPIC}")
+    await mqtt_client.disconnect()
+    logging.info("Disconnected from MQTT broker")
+    
 
 app = FastAPI(lifespan=lifespan)
 app.title = "Drone Command API"
@@ -46,7 +68,7 @@ router = APIRouter()
 async def get_drone_status(drone_id: str):
     
     try:
-        result = await drone_service.get_status(drone_id)
+        result = await drone_command_service.get_status(drone_id)
         return DroneStatusResponse(drone_id=drone_id, drone_status=result)
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
@@ -61,7 +83,7 @@ async def takeoff_drone(drone_id: str):
     
     try:
         logging.info("takeoff start.")
-        result = await drone_service.execute_takeoff(drone_id=drone_id)
+        result = await drone_command_service.execute_takeoff(drone_id=drone_id)
         return DroneCommandResponse(message=result)
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
@@ -75,7 +97,7 @@ async def takeoff_drone(drone_id: str):
 async def land_drone(drone_id: str):
     
     try:
-        result = await drone_service.execute_land(drone_id=drone_id)
+        result = await drone_command_service.execute_land(drone_id=drone_id)
         return DroneCommandResponse(message=result)
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
@@ -89,7 +111,7 @@ async def land_drone(drone_id: str):
 async def return_home(drone_id: str):
     
     try:
-        result = await drone_service.execute_return_home(drone_id=drone_id)
+        result = await drone_command_service.execute_return_home(drone_id=drone_id)
         return DroneCommandResponse(message=result)
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
