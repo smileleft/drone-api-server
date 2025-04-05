@@ -1,0 +1,47 @@
+@startuml
+
+enum DroneStatus {
+    UNKNOWN
+    IDLE
+    DOCKED
+    FLYING
+    RETURNING
+}
+
+class Drone {
+    - drone_id: str
+    - dock_id: str
+    - status: DroneStatus
+    - last_updated: datetime
+    + takeoff()
+    + land(dock_id: str)
+    + return_home()
+    + update_status(status: DroneStatus)
+}
+
+class DroneRepository {
+    - _drones: Dict[str, Drone]
+    + get(drone_id: str): Drone
+}
+
+class DroneCommandService {
+    - drone_repository: DroneRepository
+    + get_status(drone_id: str): DroneStatus
+    + execute_takeoff(drone_id: str): str
+    + execute_land(drone_id: str): str
+    + execute_return_home(drone_id: str): str
+}
+
+class FastAPI {
+    + get("/drones/{drone_id}/status")
+    + post("/drones/{drone_id}/takeoff")
+    + post("/drones/{drone_id}/land") 
+    + post("/drones/{drone_id}/return-home")
+}
+
+DroneStatus --* Drone
+DroneRepository o-- Drone
+DroneCommandService *-- DroneRepository
+FastAPI *-- DroneCommandService
+
+@enduml
