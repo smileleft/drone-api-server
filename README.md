@@ -27,7 +27,7 @@ This project is a FastAPI-based server for managing drones. It integrates with M
 1. **Clone the Repository**:
     
     ```bash
-    git clone <https://github.com/your-repo/drone_api_server.git>
+    git clone <https://gitlab.com/devops5995501/drone_api_server.git>
     cd drone_api_server
     ```
     
@@ -48,9 +48,9 @@ This project is a FastAPI-based server for managing drones. It integrates with M
 
 ├── Dockerfile                # Docker configuration for the API
 
-├── [docker-compose.yaml](http://_vscodecontentref_/1)       # Docker Compose configuration
+├── docker-compose.yaml       # Docker Compose configuration
 
-├── [main.py](http://_vscodecontentref_/2)                   # Entry point for the FastAPI application
+├── main.py                   # Entry point for the FastAPI application
 
 ├── domain/                   # Domain logic for drones
 
@@ -58,7 +58,7 @@ This project is a FastAPI-based server for managing drones. It integrates with M
 
 ├── infrastructure/           # Infrastructure-related code
 
-│   ├── [mqtt_handler.py](http://_vscodecontentref_/3)       # MQTT handler for communication
+│   ├── mqtt_handler.py       # MQTT handler for communication
 
 │   ├── repository/           # Repository for MongoDB interactions
 
@@ -68,9 +68,9 @@ This project is a FastAPI-based server for managing drones. It integrates with M
 
 │   ├── test_drone.py
 
-├── [requirements.txt](http://_vscodecontentref_/4)          # Python dependencies
+├── requirements.txt          # Python dependencies
 
-└── [README.md](http://_vscodecontentref_/5)                 # Project documentation
+└── README.md                 # Project documentation
 
 ## **API Endpoints**
 
