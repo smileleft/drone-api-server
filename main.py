@@ -14,13 +14,11 @@ from infrastructure.repository.drone_repository import DroneRepository
 import application.drone_command_service as drone_command_service
 
 # MQTT configuration
-MQTT_HOST = "localhost"
-MQTT_PORT = 1883
 COMMAND_TOPIC = "drone/command"
 STATUS_TOPIC = "drone/status"
 
 # MongoDB configuration
-MONGO_URI = "mongodb://localhost:27017"
+MONGO_URI = "mongodb://hkcho:hkcho1234@localhost:27017/?authSource=drone_db"
 
 
 # Initialize MQTT client and repository
@@ -29,6 +27,10 @@ repository = DroneRepository(mongo_uri=MONGO_URI)
 
 # Initialize MQTT handler
 mqtt_handler = MQTTHandler(mqtt_client, COMMAND_TOPIC, STATUS_TOPIC, repository)
+
+
+# Initialize DroneCommandService
+drone_command_service = drone_command_service.DroneCommandService(drone_repository=repository, mqtt_handler=mqtt_handler)
 
 
 # region Response definition
@@ -45,15 +47,13 @@ async def lifespan(app: FastAPI):
     """
     Start the MQTT client.
     """
-    await mqtt_client.connect(MQTT_HOST, MQTT_PORT)
-    logging.info(f"Connected to MQTT broker at {MQTT_HOST}:{MQTT_PORT}")
-    await mqtt_client.subscribe(COMMAND_TOPIC)
-    logging.info(f"Subscribed to topic {COMMAND_TOPIC}")
+    await mqtt_handler.connect()
+    #logging.info(f"Connected to MQTT broker at {MQTT_HOST}:{MQTT_PORT}")
+    mqtt_handler.subscribe_to_topics()
     
-
     yield
-    await mqtt_client.unsubscribe(COMMAND_TOPIC)
-    logging.info(f"Unsubscribed from topic {COMMAND_TOPIC}")
+    #mqtt_client.unsubscribe(COMMAND_TOPIC)
+    #logging.info(f"Unsubscribed from topic {COMMAND_TOPIC}")
     await mqtt_client.disconnect()
     logging.info("Disconnected from MQTT broker")
     

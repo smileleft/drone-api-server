@@ -11,7 +11,23 @@ class MQTTHandler:
         self.status_topic = status_topic
         self.repository = repository
 
+        self.mqtt_client.on_connect = self.on_connect
         self.mqtt_client.on_message = self.on_message
+
+    async def connect(self):
+        """
+        Connect to the MQTT broker.
+        """
+        await self.mqtt_client.connect(host="localhost", port=1883)
+        logging.info("Connected to MQTT broker")
+
+    async def on_connect(self, client, flags, rc, properties):
+        """
+        Callback function for when the client connects to the broker.
+        """
+        logging.info(f"Connected to MQTT broker with result code: {rc}")
+        self.subscribe_to_topics()
+
 
     def subscribe_to_topics(self):
         """
@@ -53,8 +69,6 @@ class MQTTHandler:
                 # Handle status messages
                 drone_data = message
 
-                # Save the drone status to the database
-
                 # validate the payload
                 if not drone_data.get("drone_id"):
                     logging.error("Invalid status payload: missing 'drone_id'")
@@ -62,7 +76,16 @@ class MQTTHandler:
                 if not drone_data.get("status"):
                     logging.error("Invalid status payload: missing 'status'")
                     return
-                self.repository.save(Drone.from_dict(drone_data))
+                
+                # Save the drone status to the database
+                print("save start")
+                drone = Drone.from_dict(drone_data)
+                serialized_drone = drone.to_dict()
+                print("serialized_drone = ", serialized_drone)
+                await self.repository.save(serialized_drone)
+
+                #await self.repository.save(drone_data)
+                print("save end")
                 logging.info(f"Drone status saved to database: {drone_data}")
 
         except Exception as e:

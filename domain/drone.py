@@ -31,7 +31,7 @@ class Drone:
         self.mqtt_client = mqtt_client
         self.status_topic = status_topic
 
-        logging.info(f"Drone {self.drone_id} initialized with status {self.status.name}")
+        #logging.info(f"Drone {self.drone_id} initialized with status {self.status.name}")
 
     def _publish_status(self):
         """
@@ -40,7 +40,7 @@ class Drone:
         status_msg = {
             "drone_id": self.drone_id,
             "dock_id": self.dock_id,
-            "status": self.status.name,
+            "status": self.status.value,
             "last_updated": self.last_updated.strftime("%Y-%m-%dT%H:%M:%S")
         }
         self.mqtt_client.publish(self.status_topic, json.dumps(status_msg), qos=1)
@@ -50,10 +50,22 @@ class Drone:
         """
         Set the drone status to flying and publish the status.
         """
-        self.status = DroneStatus.FLYING
+        #self.status = DroneStatus.FLYING
+        self.status = "flying"
         self.last_updated = datetime.now()
-        logging.info(f"Drone {self.drone_id} took off from dock {self.dock_id}")
-        self._publish_status()
+        #logging.info(f"Drone {self.drone_id} took off from dock {self.dock_id}")
+        #self._publish_status()
+        
+
+    def return_home(self):
+        """
+        Set the drone status to returning and publish the status.
+        """
+        self.status = DroneStatus.RETURNING
+        self.last_updated = datetime.now()
+        #logging.info(f"Drone {self.drone_id} is returning to dock {self.dock_id}")
+        #self._publish_status()
+        return self.to_dict()
 
     def land(self, dock_id=None):
         """
@@ -62,14 +74,58 @@ class Drone:
         self.status = DroneStatus.DOCKED
         self.last_updated = datetime.now()
         self.dock_id = dock_id
-        logging.info(f"Drone {self.drone_id} landed at dock {dock_id}")
-        self._publish_status()
+        #logging.info(f"Drone {self.drone_id} landed at dock {dock_id}")
+        #self._publish_status()
+        return self.to_dict()
 
-    def return_home(self):
+
+
+    @classmethod
+    def from_dict(cls, data: dict):
         """
-        Set the drone status to returning and publish the status.
+        Create a Drone instance from a dictionary.
         """
-        self.status = DroneStatus.RETURNING
-        self.last_updated = datetime.now()
-        logging.info(f"Drone {self.drone_id} is returning to dock {self.dock_id}")
-        self._publish_status()
+        drone_id = data.get("drone_id")
+        dock_id = data.get("dock_id")
+
+        # Convert status to DroneStatus or set to UNKNOWN
+        status_str = data.get("status", DroneStatus.UNKNOWN.value)
+        try:
+            status = DroneStatus(status_str.lower())  # Convert string to DroneStatus
+        except ValueError:
+            raise ValueError(f"Invalid status: {status_str}")
+
+        last_updated = datetime.strptime(data["last_updated"], "%Y-%m-%dT%H:%M:%S")
+        
+        mqtt_client = data.get("mqtt_client")
+        status_topic = data.get("status_topic", "drone/status")
+
+        return cls(
+            drone_id=drone_id,
+            mqtt_client=mqtt_client,
+            status_topic=status_topic,
+            dock_id=dock_id,
+            status=status
+        )
+    
+    # def to_dict(self):
+    #     """
+    #     Convert the Drone instance to a dictionary.
+    #     """
+    #     return {
+    #         "drone_id": self.drone_id,
+    #         "dock_id": self.dock_id,
+    #         "status": self.status,
+    #         "last_updated": self.last_updated.strftime("%Y-%m-%dT%H:%M:%S"),
+    #     }
+
+    def to_dict(self):
+        """
+        Convert the Drone instance to a dictionary.
+        """
+        return {
+            "drone_id": self.drone_id,
+            "dock_id": self.dock_id,
+            "status": self.status.value if isinstance(self.status, DroneStatus) else self.status,
+            "last_updated": self.last_updated.strftime("%Y-%m-%dT%H:%M:%S"),
+        }

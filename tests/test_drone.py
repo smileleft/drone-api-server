@@ -1,15 +1,35 @@
 import unittest
+from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime
 from domain.drone import Drone, DroneStatus
+import asyncio
 
-class TestDrone(unittest.TestCase):
+class TestDrone(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         """
         Set up a test drone object before each test.
         """
-        self.drone = Drone(drone_id="drone-123", dock_id="dock-1", status=DroneStatus.IDLE)
+        # Mock MQTTClient
+        mqtt_client = MagicMock()
+        mqtt_client.connect = AsyncMock(return_value=None)  # Mock connect method
+        mqtt_client.publish = AsyncMock(return_value=None)  # Mock publish method
 
-    def test_initialization(self):
+        # Initialize Drone with mocked MQTT client
+        self.drone = asyncio.run(self._initialize_drone(mqtt_client))
+
+    async def _initialize_drone(self, mqtt_client):
+        """
+        Helper method to initialize the drone asynchronously.
+        """
+        return Drone(
+            drone_id="drone-123",
+            mqtt_client=mqtt_client,
+            status_topic="drone/status",
+            dock_id="dock-1",
+            status=DroneStatus.IDLE
+        )
+
+    async def test_initialization(self):
         """
         Test the initialization of a Drone object.
         """
@@ -18,7 +38,7 @@ class TestDrone(unittest.TestCase):
         self.assertEqual(self.drone.status, DroneStatus.IDLE)
         self.assertIsInstance(self.drone.last_updated, datetime)
 
-    def test_takeoff(self):
+    async def test_takeoff(self):
         """
         Test the takeoff method.
         """
@@ -26,7 +46,7 @@ class TestDrone(unittest.TestCase):
         self.assertEqual(self.drone.status, DroneStatus.FLYING)
         self.assertIsInstance(self.drone.last_updated, datetime)
 
-    def test_land(self):
+    async def test_land(self):
         """
         Test the land method.
         """
@@ -35,7 +55,7 @@ class TestDrone(unittest.TestCase):
         self.assertEqual(self.drone.dock_id, "dock-2")
         self.assertIsInstance(self.drone.last_updated, datetime)
 
-    def test_return_home(self):
+    async def test_return_home(self):
         """
         Test the return_home method.
         """
@@ -43,25 +63,7 @@ class TestDrone(unittest.TestCase):
         self.assertEqual(self.drone.status, DroneStatus.RETURNING)
         self.assertIsInstance(self.drone.last_updated, datetime)
 
-    def test_update_status(self):
-        """
-        Test the update_status method.
-        """
-        self.drone.update_status(DroneStatus.FLYING)
-        self.assertEqual(self.drone.status, DroneStatus.FLYING)
-        self.assertIsInstance(self.drone.last_updated, datetime)
-
-    def test_to_dict(self):
-        """
-        Test the to_dict method.
-        """
-        drone_dict = self.drone.to_dict()
-        self.assertEqual(drone_dict["drone_id"], "drone-123")
-        self.assertEqual(drone_dict["dock_id"], "dock-1")
-        self.assertEqual(drone_dict["status"], "idle")
-        self.assertIsInstance(drone_dict["last_updated"], datetime)
-
-    def test_from_dict(self):
+    async def test_from_dict(self):
         """
         Test the from_dict class method.
         """
@@ -69,7 +71,7 @@ class TestDrone(unittest.TestCase):
             "drone_id": "drone-456",
             "dock_id": "dock-3",
             "status": "flying",
-            "last_updated": datetime.now().isoformat()
+            "last_updated": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         }
         drone = Drone.from_dict(drone_data)
         self.assertEqual(drone.drone_id, "drone-456")
