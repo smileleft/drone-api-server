@@ -78,15 +78,11 @@ class MQTTHandler:
                     return
                 
                 # Save the drone status to the database
-                print("save start")
                 drone = Drone.from_dict(drone_data)
                 serialized_drone = drone.to_dict()
-                print("serialized_drone = ", serialized_drone)
                 await self.repository.save(serialized_drone)
 
-                #await self.repository.save(drone_data)
-                print("save end")
-                logging.info(f"Drone status saved to database: {drone_data}")
+                logging.info(f"Drone status saved to database: {serialized_drone}")
 
         except Exception as e:
             logging.error(f"Error processing message: {e}")

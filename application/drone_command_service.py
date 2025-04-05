@@ -105,9 +105,7 @@ class DroneCommandService:
         """
         Publish the current status of the drone to the MQTT status topic.
         """
-        print(f"drone_data: {drone_data}")
         status = drone_data.get("status")
-        print(f"status: {status}")
         status_msg = {
             "drone_id": drone_data['drone_id'],
             "dock_id": drone_data['dock_id'],
@@ -115,7 +113,6 @@ class DroneCommandService:
             "status": status,
             "last_updated": drone_data.get("last_updated")
         }
-        print(f"status_msg: {status_msg}")
         self.subscriber.mqtt_client.publish(self.subscriber.status_topic, json.dumps(status_msg), qos=1)
         #logging.info(f"Drone {drone_data.get('drone_id')} published status: {status_msg})")
 
