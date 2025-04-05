@@ -18,12 +18,12 @@ COMMAND_TOPIC = "drone/command"
 STATUS_TOPIC = "drone/status"
 
 # MongoDB configuration
-MONGO_URI = "mongodb://hkcho:hkcho1234@localhost:27017/?authSource=drone_db"
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 
 
 # Initialize MQTT client and repository
 mqtt_client = MQTTClient("drone-api-server")
-repository = DroneRepository(mongo_uri=MONGO_URI)
+repository = DroneRepository(mongo_uri=MONGODB_URI)
 
 # Initialize MQTT handler
 mqtt_handler = MQTTHandler(mqtt_client, COMMAND_TOPIC, STATUS_TOPIC, repository)

@@ -18,7 +18,7 @@ class MQTTHandler:
         """
         Connect to the MQTT broker.
         """
-        await self.mqtt_client.connect(host="localhost", port=1883)
+        await self.mqtt_client.connect(host="mosquitto", port=1883)
         logging.info("Connected to MQTT broker")
 
     async def on_connect(self, client, flags, rc, properties):
